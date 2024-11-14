@@ -1,0 +1,793 @@
+[
+    {
+        "id": "4ad7401d58282823",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "2af05018b9b5b6e6",
+        "type": "ffmpeg",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "outputs": 2,
+        "cmdPath": "ffmpeg",
+        "cmdArgs": "[\"-version\"]",
+        "cmdOutputs": 1,
+        "killSignal": "SIGTERM",
+        "x": 690,
+        "y": 420,
+        "wires": [
+            [
+                "d89b82a9523e4e04",
+                "a03b2b7a1422027e"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "620b054d7a5c3bac",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Start Transcoding GoPro",
+        "func": "return {\n  filename: msg.file,\n  action: {\n    command: 'start',\n    path: 'ffmpeg',\n    args: [\n      \"-i\", msg.filename,\n      \"-progress\", \"pipe:1\",\n      \"-n\",\n      \"-map\", \"0:v\",\n      \"-map\", \"0:a\",\n      \"-map\", \"0:m:handler_name:GoPro MET\",\n      \"-map_metadata\", \"0\",\n      \"-c:v\", \"libx265\",\n      \"-pix_fmt\", \"yuv420p10le\",\n      \"-preset\", \"fast\",\n      \"-crf\", \"24\",\n      \"-x265-params\", \"log-level=error\",\n      \"-tag:v\", \"hvc1\",\n      \"-c:a\", \"copy\",\n      \"-c:2\", \"copy\",\n      \"-movflags\", \"use_metadata_tags\",\n      \"/temporary/\" + msg.file\n    ],\n  }\n};",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 480,
+        "wires": [
+            [
+                "2af05018b9b5b6e6"
+            ]
+        ]
+    },
+    {
+        "id": "95a8ebe67091e711",
+        "type": "watch",
+        "z": "4ad7401d58282823",
+        "name": "Watch Input Directory",
+        "files": "/input/",
+        "recursive": "",
+        "x": 220,
+        "y": 200,
+        "wires": [
+            [
+                "d865e153fbcf0df1"
+            ]
+        ]
+    },
+    {
+        "id": "fcc5e7a78b26732e",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Is Input File Exists",
+        "func": "fs.access(msg.filename, fs.constants.F_OK, (err) => {\n    if (err) {\n        msg.input_exists = false;\n    } else {\n        msg.input_exists = true;\n    }\n    node.send(msg);\n});",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "fs",
+                "module": "fs"
+            }
+        ],
+        "x": 210,
+        "y": 280,
+        "wires": [
+            [
+                "4a817b5a012fd3ac"
+            ]
+        ]
+    },
+    {
+        "id": "4a817b5a012fd3ac",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "Input File Exists",
+        "property": "input_exists",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 200,
+        "y": 320,
+        "wires": [
+            [
+                "5e324cb2a99bedd7"
+            ]
+        ]
+    },
+    {
+        "id": "5e324cb2a99bedd7",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "Match Extension",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "regex",
+                "v": "\\.(mp4|mkv|webm)$",
+                "vt": "str",
+                "case": true
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 200,
+        "y": 360,
+        "wires": [
+            [
+                "2faf17dde9a588a4"
+            ]
+        ]
+    },
+    {
+        "id": "2faf17dde9a588a4",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Is Output File Exists",
+        "func": "fs.access(msg.output, fs.constants.F_OK, (err) => {\n    if (err) {\n        msg.output_exists = false;\n    } else {\n        msg.output_exists = true;\n    }\n    node.send(msg);\n});",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "fs",
+                "module": "fs"
+            }
+        ],
+        "x": 220,
+        "y": 400,
+        "wires": [
+            [
+                "e430f5e26b0b2e4a"
+            ]
+        ]
+    },
+    {
+        "id": "d865e153fbcf0df1",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Add Output",
+        "func": "msg.output = \"/output/\" + msg.file;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "fs",
+                "module": "fs"
+            }
+        ],
+        "x": 190,
+        "y": 240,
+        "wires": [
+            [
+                "fcc5e7a78b26732e"
+            ]
+        ]
+    },
+    {
+        "id": "e430f5e26b0b2e4a",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "Wasn't Transcoded",
+        "property": "output_exists",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "false"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 210,
+        "y": 440,
+        "wires": [
+            [
+                "e3f37cd9a39cdb19"
+            ]
+        ]
+    },
+    {
+        "id": "98c322a0e879090b",
+        "type": "m-queue",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "queueSelect": "topic",
+        "controlFlag": "control",
+        "defaultQueue": "default",
+        "allQueues": "all",
+        "triggerCmd": "trigger",
+        "statusCmd": "status",
+        "pauseCmd": "pause",
+        "resumeCmd": "resume",
+        "flushCmd": "flush",
+        "resetCmd": "reset",
+        "peekCmd": "peek",
+        "dropCmd": "drop",
+        "maximumCmd": "maximum",
+        "newestCmd": "newest",
+        "protectCmd": "protect",
+        "deleteCmd": "delete",
+        "paused": false,
+        "protect": false,
+        "keepNewestDefault": false,
+        "maxSizeDefault": 100,
+        "protectDefault": false,
+        "persist": false,
+        "newValue": "value",
+        "storeName": "memory",
+        "statusOutput": true,
+        "outputs": 2,
+        "x": 180,
+        "y": 520,
+        "wires": [
+            [
+                "2536918e94ae7cbb"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "e3f37cd9a39cdb19",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Set Queue",
+        "func": "msg.topic = \"default\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 190,
+        "y": 480,
+        "wires": [
+            [
+                "98c322a0e879090b",
+                "5160563c51e24bb1"
+            ]
+        ]
+    },
+    {
+        "id": "7aaf5eb857bb7e03",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "Is Spawn",
+        "property": "process.status",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "spawn",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "close",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 1260,
+        "y": 460,
+        "wires": [
+            [
+                "4699a17b478ebe8f"
+            ],
+            [
+                "7b3489fcc0123aed"
+            ]
+        ]
+    },
+    {
+        "id": "1aa2870bb45ebb04",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Pop from Queue",
+        "func": "\nreturn  {\n    topic: \"default\",\n    payload: \"trigger\",\n    control: true\n};",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 620,
+        "wires": [
+            [
+                "98c322a0e879090b"
+            ]
+        ]
+    },
+    {
+        "id": "17376a805665b980",
+        "type": "exec",
+        "z": "4ad7401d58282823",
+        "command": "kill -0",
+        "addpay": "process.pid",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "Is process exists?",
+        "x": 1470,
+        "y": 400,
+        "wires": [
+            [],
+            [],
+            [
+                "73f7d06c47aadaeb"
+            ]
+        ]
+    },
+    {
+        "id": "d89b82a9523e4e04",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Copy process data",
+        "func": "msg.process = msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 880,
+        "y": 480,
+        "wires": [
+            [
+                "0e4b6c5967f4c940"
+            ]
+        ]
+    },
+    {
+        "id": "4699a17b478ebe8f",
+        "type": "delay",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1260,
+        "y": 400,
+        "wires": [
+            [
+                "17376a805665b980"
+            ]
+        ]
+    },
+    {
+        "id": "d1d81d4eecd520af",
+        "type": "inject",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 200,
+        "y": 100,
+        "wires": [
+            [
+                "c6b30746b581b7a1"
+            ]
+        ]
+    },
+    {
+        "id": "c6b30746b581b7a1",
+        "type": "exec",
+        "z": "4ad7401d58282823",
+        "command": "rm -rf /input/*.* /output/*.*  /temporary/*.*",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "Cleanup",
+        "x": 440,
+        "y": 100,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "0e4b6c5967f4c940",
+        "type": "do",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "tasks": [
+            "wait until spawned process is finished"
+        ],
+        "mode": "msg",
+        "each": "",
+        "eachType": "msg",
+        "yield": "keyValue",
+        "doneOutput": true,
+        "firstValueOutput": false,
+        "lastValueOutput": false,
+        "outputs": 2,
+        "_version": "1.0.6",
+        "x": 1110,
+        "y": 480,
+        "wires": [
+            [
+                "7aaf5eb857bb7e03"
+            ],
+            [
+                "5160563c51e24bb1"
+            ]
+        ]
+    },
+    {
+        "id": "94789800290dfd37",
+        "type": "do-return",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "mode": "done",
+        "saveValue": false,
+        "x": 1790,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "73f7d06c47aadaeb",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "property": "payload.code",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "neq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 1650,
+        "y": 400,
+        "wires": [
+            [
+                "ce4ea8c1476aeb19"
+            ],
+            [
+                "94789800290dfd37"
+            ]
+        ]
+    },
+    {
+        "id": "ce4ea8c1476aeb19",
+        "type": "do-return",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "mode": "continue",
+        "saveValue": false,
+        "x": 1800,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "95bfbb805db2b6cf",
+        "type": "exec",
+        "z": "4ad7401d58282823",
+        "command": "ffprobe -v quiet -print_format json -show_format -show_streams -show_chapters -show_programs -show_error -i ",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "ffprobe",
+        "x": 490,
+        "y": 260,
+        "wires": [
+            [
+                "60e3b26f05285049"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "2536918e94ae7cbb",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "Enclose payload in quotes",
+        "func": "\nmsg.payload = `\"${msg.payload}\"`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 200,
+        "wires": [
+            [
+                "95bfbb805db2b6cf"
+            ]
+        ]
+    },
+    {
+        "id": "60e3b26f05285049",
+        "type": "json",
+        "z": "4ad7401d58282823",
+        "name": "toJSON",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 680,
+        "y": 260,
+        "wires": [
+            [
+                "03e824854c64faaf"
+            ]
+        ]
+    },
+    {
+        "id": "03e824854c64faaf",
+        "type": "function",
+        "z": "4ad7401d58282823",
+        "name": "add msg.ffprobe",
+        "func": "const ffprobeData = msg.payload;\nmsg.payload = null;\n\n// Function to check if it's a GoPro file\nfunction isGoPro(data) {\n    const streams = data.streams || [];\n    \n    // Check 1: Look for gpmd and tmcd streams\n    const hasGpmdStream = streams.some(stream => stream.codec_tag_string === 'gpmd');\n    const hasTmcdStream = streams.some(stream => stream.codec_tag_string === 'tmcd');\n    \n    // Check 2: Look for GoPro handler names\n    const hasGoProHandler = streams.some(stream => {\n        const handlerName = stream.tags?.handler_name || '';\n        return handlerName.split(' ')[0].toLowerCase() === 'gopro';\n    });\n    \n    // Return true if both conditions are met\n    return (hasGpmdStream && hasTmcdStream) || hasGoProHandler;\n}\n\n// Get the first video and audio streams\nconst videoStream = ffprobeData.streams.find(s => s.codec_type === 'video');\nconst audioStream = ffprobeData.streams.find(s => s.codec_type === 'audio');\n\nmsg.ffprobe = {\n    // Get list of stream types\n    streams: ffprobeData.streams.map(stream => stream.codec_type),\n    raw: ffprobeData\n};\n\nif (videoStream) {\n    msg.ffprobe.resolution = `${videoStream.width}x${videoStream.height}`;\n    msg.ffprobe.video_bitrate = parseInt(videoStream.bit_rate);\n}\n\nif (audioStream) {\n    msg.ffprobe.audio_bitrate = parseInt(audioStream.bit_rate);\n}\n\nif (isGoPro(ffprobeData)) {\n    msg.ffprobe.source = \"gopro\";\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 320,
+        "wires": [
+            [
+                "25fcb47628ce8400"
+            ]
+        ]
+    },
+    {
+        "id": "25fcb47628ce8400",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "Split by Source",
+        "property": "ffprobe.source",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "gopro",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "gopro",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 700,
+        "y": 320,
+        "wires": [
+            [
+                "620b054d7a5c3bac"
+            ],
+            [
+                "bffec5d848d98b2a"
+            ]
+        ]
+    },
+    {
+        "id": "8db2bdcff981b67a",
+        "type": "comment",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "info": "Handlers for other videos can be introduced by adding special tags to videos using ffmpeg.",
+        "x": 880,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "5160563c51e24bb1",
+        "type": "delay",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "5",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 200,
+        "y": 640,
+        "wires": [
+            [
+                "0054368fdd9ebd75"
+            ]
+        ]
+    },
+    {
+        "id": "0054368fdd9ebd75",
+        "type": "exec",
+        "z": "4ad7401d58282823",
+        "command": "pgrep ffmpeg",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "Is ffmpeg alive?",
+        "x": 380,
+        "y": 640,
+        "wires": [
+            [],
+            [],
+            [
+                "521f1bdbe2671552"
+            ]
+        ]
+    },
+    {
+        "id": "521f1bdbe2671552",
+        "type": "switch",
+        "z": "4ad7401d58282823",
+        "name": "",
+        "property": "payload.code",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 640,
+        "wires": [
+            [
+                "1aa2870bb45ebb04"
+            ],
+            [
+                "73edd8bca05c3f81"
+            ]
+        ]
+    },
+    {
+        "id": "bffec5d848d98b2a",
+        "type": "debug",
+        "z": "4ad7401d58282823",
+        "name": "debug 15",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 880,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "73edd8bca05c3f81",
+        "type": "debug",
+        "z": "4ad7401d58282823",
+        "name": "debug 16",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "7b3489fcc0123aed",
+        "type": "debug",
+        "z": "4ad7401d58282823",
+        "name": "debug 20",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1460,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "a03b2b7a1422027e",
+        "type": "debug",
+        "z": "4ad7401d58282823",
+        "name": "debug 21",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 440,
+        "wires": []
+    }
+]

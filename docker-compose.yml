@@ -1,0 +1,20 @@
+---
+services:
+  nodered:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_RED_EXPORT_GLOBAL_CONTEXT_KEYS=true
+      - NODE_RED_EDITOR_THEME=monokai-dimmed
+    command: ["--settings", "/app/settings.js"]
+    ports:
+      - "1880:1880"
+    volumes:
+      - "${PWD}/settings.js:/app/settings.js"
+      - "${PWD}/.data/:/data"
+      - "${PWD}/video/input:/input"
+      - "${PWD}/video/tmp:/temporary"
+      - "${PWD}/video/output:/output"
+    restart: on-failure
+
