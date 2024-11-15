@@ -7,11 +7,13 @@ services:
     environment:
       - NODE_RED_EXPORT_GLOBAL_CONTEXT_KEYS=true
       - NODE_RED_EDITOR_THEME=monokai-dimmed
+      - NODE_RED_DEFAULT_FLOW_FILE=/app/flow.json
     command: ["--settings", "/app/settings.js"]
     ports:
       - "1880:1880"
     volumes:
       - "${PWD}/settings.js:/app/settings.js"
+      - "${PWD}/flow.json:/app/flow.json"
       - "${PWD}/.data/:/data"
       - "${PWD}/video/input:/input"
       - "${PWD}/video/tmp:/temporary"

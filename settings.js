@@ -32,7 +32,7 @@ module.exports = {
  ******************************************************************************/
 
     /** The file containing the flows. If not set, defaults to flows_<hostname>.json **/
-    flowFile: 'flows.json',
+    flowFile: process.env.NODE_RED_DEFAULT_FLOW_FILE || "flow.json",
 
     /** By default, credentials are encrypted in storage using a generated key. To
      * specify your own secret, set the following property.
